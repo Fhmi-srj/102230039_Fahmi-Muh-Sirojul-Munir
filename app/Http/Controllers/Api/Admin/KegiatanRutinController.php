@@ -393,17 +393,8 @@ class KegiatanRutinController extends Controller
                         'kegiatan_rutin_id' => $rutin->id,
                     ]);
 
-                    Kalender::create([
-                        'tanggal_mulai' => $kegiatan->waktu_mulai,
-                        'tanggal_berakhir' => $kegiatan->waktu_berakhir,
-                        'kegiatan' => $kegiatan->nama_kegiatan,
-                        'status_kbm' => 'Aktif',
-                        'tempat' => $kegiatan->tempat,
-                        'guru_id' => $kegiatan->penanggung_jawab_id,
-                        'kegiatan_id' => $kegiatan->id,
-                        'keterangan' => 'Kegiatan',
-                        'tahun_ajaran_id' => $kegiatan->tahun_ajaran_id,
-                    ]);
+                    // We intentionally do NOT create Kalender records here anymore 
+                    // to keep the Educational Calendar clean from weekly routines.
                 }
             }
 

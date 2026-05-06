@@ -103,9 +103,11 @@ class HistoricalDataSeeder extends Seeder
             // Get jadwal for this day
             $todayJadwal = $jadwalList->filter(fn($j) => $j->hari === $hari);
 
+            $processedSiswaForToday = [];
+
             foreach ($todayJadwal as $jadwal) {
                 $status = $this->randomGuruStatus(95);
-                $absensiMengajarId = DB::table('absensi_mengajar')->insertGetId([
+                DB::table('absensi_mengajar')->insert([
                     'jadwal_id' => $jadwal->id,
                     'guru_id' => $jadwal->guru_id,
                     'tanggal' => $currentDate->format('Y-m-d'),
@@ -117,23 +119,31 @@ class HistoricalDataSeeder extends Seeder
                     'updated_at' => $currentDate->copy()->setTime(7, 0),
                 ]);
 
-                // Create absensi siswa for this class
-                $classStudents = $siswaByKelas->get($jadwal->kelas_id, collect());
-                $absensiSiswaData = [];
+                // Create absensi siswa for this class, only once per day
+                if (!isset($processedSiswaForToday[$jadwal->kelas_id])) {
+                    $classStudents = $siswaByKelas->get($jadwal->kelas_id, collect());
+                    $absensiSiswaData = [];
 
-                foreach ($classStudents as $siswa) {
-                    $absensiSiswaData[] = [
-                        'absensi_mengajar_id' => $absensiMengajarId,
-                        'siswa_id' => $siswa->id,
-                        'status' => $this->randomStatus(90),
-                        'keterangan' => null,
-                        'created_at' => $currentDate->copy()->setTime(7, 0),
-                        'updated_at' => $currentDate->copy()->setTime(7, 0),
-                    ];
-                }
+                    foreach ($classStudents as $siswa) {
+                        $siswaStatus = $this->randomStatus(90);
+                        if ($siswaStatus !== 'H') {
+                            $absensiSiswaData[] = [
+                                'tanggal' => $currentDate->format('Y-m-d'),
+                                'kelas_id' => $jadwal->kelas_id,
+                                'siswa_id' => $siswa->id,
+                                'status' => $siswaStatus,
+                                'keterangan' => null,
+                                'created_at' => $currentDate->copy()->setTime(7, 0),
+                                'updated_at' => $currentDate->copy()->setTime(7, 0),
+                            ];
+                        }
+                    }
 
-                if (!empty($absensiSiswaData)) {
-                    DB::table('absensi_siswa')->insert($absensiSiswaData);
+                    if (!empty($absensiSiswaData)) {
+                        DB::table('absensi_siswa')->insert($absensiSiswaData);
+                    }
+
+                    $processedSiswaForToday[$jadwal->kelas_id] = true;
                 }
 
                 $count++;

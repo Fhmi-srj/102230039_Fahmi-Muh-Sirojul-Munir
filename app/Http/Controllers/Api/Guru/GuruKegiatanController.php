@@ -823,4 +823,45 @@ class GuruKegiatanController extends Controller
             ]
         ]);
     }
+    /**
+     * Membatalkan/Meliburkan kegiatan oleh Penanggung Jawab
+     */
+    public function cancelKegiatan(Request $request, $id): JsonResponse
+    {
+        $user = $request->user();
+        $guru = Guru::find($user->guru_id);
+
+        if (!$guru) {
+            return response()->json(['error' => 'Guru tidak ditemukan'], 404);
+        }
+
+        $kegiatan = Kegiatan::find($id);
+
+        if (!$kegiatan) {
+            return response()->json(['error' => 'Kegiatan tidak ditemukan'], 404);
+        }
+
+        // Verify guru is the PJ
+        if ((int) $kegiatan->penanggung_jawab_id !== (int) $guru->id) {
+            return response()->json(['error' => 'Hanya penanggung jawab yang bisa membatalkan/meliburkan kegiatan'], 403);
+        }
+
+        $alasan = $request->input('keterangan', 'Dibatalkan oleh Penanggung Jawab');
+
+        $kegiatan->update(['status' => 'Dibatalkan']);
+
+        // Update Kalender if exists
+        \App\Models\Kalender::where('kegiatan_id', $kegiatan->id)->update(['status_kbm' => 'Libur']);
+
+        // Log activity
+        ActivityLog::logDelete(
+            $kegiatan,
+            "Membatalkan/meliburkan kegiatan: {$kegiatan->nama_kegiatan} oleh PJ. Alasan: {$alasan}"
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kegiatan berhasil dibatalkan/diliburkan'
+        ]);
+    }
 }

@@ -362,7 +362,7 @@ Route::prefix('guru-panel')->middleware('auth:sanctum')->group(function () {
     Route::get('kegiatan/{id}/absensi-pendamping', [\App\Http\Controllers\Api\Guru\GuruKegiatanController::class, 'getAbsensiPendamping']);
     Route::get('kegiatan/{id}/check-pendamping-status', [\App\Http\Controllers\Api\Guru\GuruKegiatanController::class, 'checkPendampingStatus']);
     Route::get('kegiatan/{id}/absensi', [\App\Http\Controllers\Api\Guru\GuruKegiatanController::class, 'getAbsensiKegiatan']);
-
+    Route::post('kegiatan/{id}/cancel', [\App\Http\Controllers\Api\Guru\GuruKegiatanController::class, 'cancelKegiatan']);
     // Absensi Rapat
     Route::get('rapat-hari-ini', [\App\Http\Controllers\Api\Guru\GuruRapatController::class, 'rapatHariIni']);
     Route::get('rapat-seminggu', [\App\Http\Controllers\Api\Guru\GuruRapatController::class, 'rapatSeminggu']);

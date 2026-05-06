@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('push_subscriptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->text('endpoint')->unique();
+            $table->string('endpoint', 500)->unique();
             $table->string('public_key')->nullable();
             $table->string('auth_token')->nullable();
             $table->json('preferences')->nullable(); // {"jadwal": true, "kegiatan": true, "rapat": true}

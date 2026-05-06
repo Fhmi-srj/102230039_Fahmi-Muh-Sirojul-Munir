@@ -41,6 +41,7 @@ import AdminCbtSoal from './pages/Admin/Cbt/Soal';
 import GuruLayout from './pages/Guru/components/GuruLayout';
 import GuruBeranda from './pages/Guru/Beranda';
 import GuruRiwayat from './pages/Guru/Riwayat';
+import GuruKaldik from './pages/Guru/Kaldik';
 
 import GuruProfil from './pages/Guru/Profil';
 import GuruPengaturan from './pages/Guru/Pengaturan';
@@ -83,7 +84,7 @@ function App() {
             <Routes>
                 {/* Public Route */}
                 <Route path="/login" element={<Login />} />
-                
+
                 {/* Siswa Panel Routes */}
                 <Route
                     path="/siswa/*"
@@ -102,7 +103,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
-                
+
                 {/* Siswa CBT Routes - protected, uses same siswa auth token */}
                 <Route
                     path="/cbt/exam"
@@ -125,6 +126,7 @@ function App() {
                                     <Routes>
                                         <Route index element={<GuruBeranda />} />
                                         <Route path="riwayat" element={<GuruRiwayat />} />
+                                        <Route path="kaldik" element={<GuruKaldik />} />
 
                                         <Route path="profil" element={<GuruProfil />} />
                                         <Route path="pengaturan" element={<GuruPengaturan />} />

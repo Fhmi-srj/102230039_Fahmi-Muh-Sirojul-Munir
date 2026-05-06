@@ -55,6 +55,7 @@ function ManajemenKegiatan() {
     const [filterJenis, setFilterJenis] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [activeFilter, setActiveFilter] = useState(null);
+    const [hideRoutine, setHideRoutine] = useState(true);
 
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [expandedRows, setExpandedRows] = useState(new Set());
@@ -177,6 +178,7 @@ function ManajemenKegiatan() {
 
     const filteredData = (() => {
         let result = data.filter(item => {
+            if (hideRoutine && item.kegiatan_rutin_id) return false;
             if (filterJenis && item.jenis_kegiatan !== filterJenis) return false;
             if (filterStatus && (item.kalender?.status_kbm || 'Aktif') !== filterStatus) return false;
             if (!search) return true;
@@ -604,7 +606,15 @@ function ManajemenKegiatan() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <div className={`flex gap-2 items-center ${isMobile ? 'w-full' : 'flex-nowrap'}`}>
+                <div className={`flex gap-2 items-center ${isMobile ? 'w-full flex-wrap' : 'flex-nowrap'}`}>
+                    <button 
+                        onClick={() => setHideRoutine(!hideRoutine)} 
+                        className={`flex flex-1 items-center justify-center gap-2 ${hideRoutine ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-gray-100 text-gray-500 border border-transparent'} px-4 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all`}
+                        title={hideRoutine ? 'Tampilkan Kegiatan Rutin / Ekskul' : 'Sembunyikan Kegiatan Rutin / Ekskul'}
+                    >
+                        <i className={`fas ${hideRoutine ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                        <span className="whitespace-nowrap">{isMobile ? 'Hide Rutin' : 'Sembunyikan Rutin / Ekskul'}</span>
+                    </button>
                     {selectedItems.size > 0 && (
                         <button onClick={handleBulkDelete} className={`bg-rose-500 text-white ${isMobile ? 'flex-1 py-2.5' : 'px-5 py-2.5'} rounded-xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest hover:bg-rose-600 transition-all shadow-lg shadow-rose-200`}>
                             <i className="fas fa-trash"></i>

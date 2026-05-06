@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import api from '../../../lib/axios';
+import Swal from 'sweetalert2';
 
 // Animated Modal Wrapper for smooth transitions
 function AnimatedModalWrapper({ children, onClose, maxWidth = 'max-w-md' }) {
@@ -84,6 +85,7 @@ export function ModalAbsensiKegiatanPJ({ kegiatan, tanggal, guruPendamping, sisw
     const [loading, setLoading] = useState(false);
     const [loadingExisting, setLoadingExisting] = useState(true);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
     const [activeKelas, setActiveKelas] = useState(null);
     const [pendampingExpanded, setPendampingExpanded] = useState(true);
     const [siswaExpanded, setSiswaExpanded] = useState(false);
@@ -319,6 +321,42 @@ export function ModalAbsensiKegiatanPJ({ kegiatan, tanggal, guruPendamping, sisw
             alert(err.response?.data?.error || 'Gagal menyimpan absensi');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCancelKegiatan = async () => {
+        const { value: alasan } = await Swal.fire({
+            title: 'Liburkan Kegiatan?',
+            text: 'Masukkan alasan membatalkan/meliburkan kegiatan ini:',
+            input: 'text',
+            inputPlaceholder: 'Contoh: Ada ujian sekolah / Hujan lebat',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Ya, Liburkan',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Alasan harus diisi!'
+                }
+            }
+        });
+
+        if (alasan) {
+            setIsCancelling(true);
+            try {
+                await api.post(`/guru-panel/kegiatan/${kegiatan.id}/cancel`, {
+                    keterangan: alasan
+                });
+                onSuccess(); // Close modal and refresh dashboard
+            } catch (err) {
+                console.error('Error cancelling kegiatan:', err);
+                Swal.fire('Gagal!', err.response?.data?.error || 'Gagal membatalkan kegiatan', 'error');
+            } finally {
+                setIsCancelling(false);
+            }
         }
     };
 
@@ -736,29 +774,39 @@ export function ModalAbsensiKegiatanPJ({ kegiatan, tanggal, guruPendamping, sisw
                 </div>
 
                 {/* Fixed Footer */}
-                <div className="flex-shrink-0 p-4 border-t border-gray-100 flex gap-3 bg-white">
+                <div className="flex-shrink-0 p-4 border-t border-gray-100 flex flex-col gap-3 bg-white">
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-600 font-medium hover:bg-gray-50"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={loading || isCancelling || !canSubmit}
+                            className={`flex-1 py-3 rounded-xl font-medium flex items-center justify-center gap-2 ${canSubmit
+                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                } disabled:opacity-50`}
+                        >
+                            {loading ? (
+                                <i className="fas fa-spinner fa-spin"></i>
+                            ) : (
+                                <>
+                                    <i className="fas fa-save"></i>
+                                    Simpan Absensi
+                                </>
+                            )}
+                        </button>
+                    </div>
                     <button
-                        onClick={onClose}
-                        className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-600 font-medium hover:bg-gray-50"
+                        onClick={handleCancelKegiatan}
+                        disabled={loading || isCancelling}
+                        className="w-full py-2.5 rounded-xl text-red-500 font-medium text-sm flex items-center justify-center gap-2 hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors disabled:opacity-50"
                     >
-                        Batal
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading || !canSubmit}
-                        className={`flex-1 py-3 rounded-xl font-medium flex items-center justify-center gap-2 ${canSubmit
-                            ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            } disabled:opacity-50`}
-                    >
-                        {loading ? (
-                            <i className="fas fa-spinner fa-spin"></i>
-                        ) : (
-                            <>
-                                <i className="fas fa-save"></i>
-                                Simpan Absensi
-                            </>
-                        )}
+                        {isCancelling ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-calendar-times"></i>}
+                        Liburkan / Batalkan Kegiatan
                     </button>
                 </div>
             </div>
