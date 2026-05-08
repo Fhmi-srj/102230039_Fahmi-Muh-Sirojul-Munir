@@ -1,26 +1,35 @@
 <?php
-// Test WA dari hosting - hapus file ini setelah selesai
-$url    = 'https://wa.groovy-media.com/send-message';
-$apiKey = 'KZez7npqA0G2OEQjJSSLrxQU6NZV8A';
+require 'vendor/autoload.php';
+$app = require_once 'bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
+
+// Ambil langsung dari config Laravel (yang sudah diupdate dari .env)
+$url    = config('services.mpwa.url');
+$apiKey = config('services.mpwa.api_key');
+$sender = config('services.mpwa.sender');
 
 // Coba berbagai format sender
 $senderVariants = [
-    '6285190820190',
-    '6285190820190:1',
-    '085190820190',
+    $sender,
+    $sender . ':1',
+    '0' . substr($sender, 2)
 ];
 
 echo "<pre>";
+echo "=== Config yang terbaca dari server ===\n";
+echo "URL   : $url\n";
+echo "Key   : " . substr($apiKey, 0, 5) . "..." . substr($apiKey, -5) . "\n\n";
 
-foreach ($senderVariants as $sender) {
+foreach ($senderVariants as $s) {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
         'api_key' => $apiKey,
-        'sender'  => $sender,
-        'number'  => $sender,
-        'message' => 'Test koneksi - abaikan',
+        'sender'  => $s,
+        'number'  => $s,
+        'message' => 'Test koneksi dari server hosting - abaikan',
     ]));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -31,7 +40,7 @@ foreach ($senderVariants as $sender) {
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    echo "Sender: $sender\n";
+    echo "Sender: $s\n";
     echo "Status: $httpCode | Response: $response\n\n";
 }
 
