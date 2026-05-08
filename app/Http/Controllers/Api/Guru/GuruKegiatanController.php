@@ -37,7 +37,7 @@ class GuruKegiatanController extends Controller
             $tahunAjaranId = $user->tahun_ajaran_id ?? TahunAjaran::getCurrent()?->id;
 
             // Get kegiatan where guru is PJ or pendamping AND today is within waktu_mulai and waktu_berakhir
-            $kegiatan = Kegiatan::where('status', 'Aktif')
+            $kegiatan = Kegiatan::whereIn('status', ['Aktif', 'Dibatalkan'])
                 ->when($tahunAjaranId, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranId))
                 ->whereDate('waktu_mulai', '<=', $today)
                 ->whereDate('waktu_berakhir', '>=', $today)
@@ -119,7 +119,9 @@ class GuruKegiatanController extends Controller
                         $mulai = Carbon::parse($item->waktu_mulai);
                         $selesai = Carbon::parse($item->waktu_berakhir);
 
-                        if ($now->lt($mulai)) {
+                        if ($item->status === 'Dibatalkan') {
+                            $item->status_absensi = 'dibatalkan';
+                        } elseif ($now->lt($mulai)) {
                             $item->status_absensi = 'belum_mulai';
                         } elseif ($now->between($mulai, $selesai)) {
                             $item->status_absensi = 'sedang_berlangsung';
@@ -184,7 +186,7 @@ class GuruKegiatanController extends Controller
             $tahunAjaranId = $user->tahun_ajaran_id ?? TahunAjaran::getCurrent()?->id;
 
             // Get kegiatan where guru is PJ or pendamping, from today onwards
-            $kegiatanList = Kegiatan::where('status', 'Aktif')
+            $kegiatanList = Kegiatan::whereIn('status', ['Aktif', 'Dibatalkan'])
                 ->when($tahunAjaranId, fn($q) => $q->where('tahun_ajaran_id', $tahunAjaranId))
                 ->whereDate('waktu_berakhir', '>=', $today) // Kegiatan that hasn't ended yet
                 ->where(function ($query) use ($guru) {
@@ -221,7 +223,33 @@ class GuruKegiatanController extends Controller
                     $dateStr = $currentDate->format('Y-m-d');
 
                     // Calculate status for THIS specific date
-                    $statusAbsensi = $this->getKegiatanAbsensiStatusForDate($item, $guru, $absensi, $isPj, $dateStr);
+                    if ($item->status === 'Dibatalkan') {
+                        $statusAbsensi = 'dibatalkan';
+                        $kehadiranStatus = null;
+                    } else {
+                        $statusAbsensi = $this->getKegiatanAbsensiStatusForDate($item, $guru, $absensi, $isPj, $dateStr);
+
+                        // Determine kehadiran_status (H/S/I/A) for this guru
+                        $kehadiranStatus = null;
+                        if ($absensi && $statusAbsensi === 'sudah_absen') {
+                            if ($isPj) {
+                                $kehadiranStatus = $absensi->pj_status;
+                            } else {
+                                // Check personal entry first
+                                $pendampingData = $absensi->absensi_pendamping ?? [];
+                                foreach ($pendampingData as $entry) {
+                                    if ((string)($entry['guru_id'] ?? '') === (string)$guru->id) {
+                                        $kehadiranStatus = $entry['status'] ?? null;
+                                        break;
+                                    }
+                                }
+                                // If no personal entry but absensi is submitted, default to 'H'
+                                if ($kehadiranStatus === null && $absensi->status === 'submitted') {
+                                    $kehadiranStatus = 'H';
+                                }
+                            }
+                        }
+                    }
 
                     // Get guru pendamping names
                     $guruPendamping = is_array($item->guru_pendamping) ? $item->guru_pendamping : [];
@@ -239,27 +267,6 @@ class GuruKegiatanController extends Controller
                         $kelasPesertaList = Kelas::whereIn('id', $kelasPeserta)
                             ->select('id', 'nama_kelas')
                             ->get();
-                    }
-
-                    // Determine kehadiran_status (H/S/I/A) for this guru
-                    $kehadiranStatus = null;
-                    if ($absensi && $statusAbsensi === 'sudah_absen') {
-                        if ($isPj) {
-                            $kehadiranStatus = $absensi->pj_status;
-                        } else {
-                            // Check personal entry first
-                            $pendampingData = $absensi->absensi_pendamping ?? [];
-                            foreach ($pendampingData as $entry) {
-                                if ((string)($entry['guru_id'] ?? '') === (string)$guru->id) {
-                                    $kehadiranStatus = $entry['status'] ?? null;
-                                    break;
-                                }
-                            }
-                            // If no personal entry but absensi is submitted, default to 'H'
-                            if ($kehadiranStatus === null && $absensi->status === 'submitted') {
-                                $kehadiranStatus = 'H';
-                            }
-                        }
                     }
 
                     $kegiatanData = [
@@ -848,10 +855,9 @@ class GuruKegiatanController extends Controller
 
         $alasan = $request->input('keterangan', 'Dibatalkan oleh Penanggung Jawab');
 
+        // Tandai kegiatan sebagai dibatalkan — TIDAK mengubah KBM/Kalender
+        // Membatalkan kegiatan (misal ekstra mingguan) bukan berarti KBM libur
         $kegiatan->update(['status' => 'Dibatalkan']);
-
-        // Update Kalender if exists
-        \App\Models\Kalender::where('kegiatan_id', $kegiatan->id)->update(['status_kbm' => 'Libur']);
 
         // Log activity
         ActivityLog::logDelete(

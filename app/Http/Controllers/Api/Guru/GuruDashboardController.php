@@ -100,7 +100,7 @@ class GuruDashboardController extends Controller
                 });
 
         // Get today's activities where guru is PJ or pendamping (synced with AbsensiKegiatan)
-        $todayActivities = Kegiatan::where('status', 'Aktif')
+        $todayActivities = Kegiatan::whereIn('status', ['Aktif', 'Dibatalkan'])
             ->whereDate('waktu_mulai', '<=', $today)
             ->whereDate('waktu_berakhir', '>=', $today)
             ->where(function ($query) use ($guru) {
@@ -119,7 +119,9 @@ class GuruDashboardController extends Controller
                 $absensi = AbsensiKegiatan::where('kegiatan_id', $kegiatan->id)->first();
                 $statusAbsensi = 'belum_mulai';
 
-                if ($absensi) {
+                if ($kegiatan->status === 'Dibatalkan') {
+                    $statusAbsensi = 'dibatalkan';
+                } elseif ($absensi) {
                     if ($isPJ) {
                         // For PJ: only 'submitted' counts as sudah_absen
                         if ($absensi->status === 'submitted') {
@@ -351,7 +353,8 @@ class GuruDashboardController extends Controller
 
         // ============ STATS KEGIATAN ============
         // Get all kegiatan where guru is PJ or pendamping, that have ended
-        $kegiatanThisYear = Kegiatan::where(function ($q) use ($guru) {
+        $kegiatanThisYear = Kegiatan::where('status', 'Aktif')
+            ->where(function ($q) use ($guru) {
             $q->where('penanggung_jawab_id', $guru->id)
                 ->orWhereJsonContains('guru_pendamping', $guru->id)
                 ->orWhereJsonContains('guru_pendamping', (string) $guru->id);

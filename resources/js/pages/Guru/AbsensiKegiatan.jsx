@@ -100,6 +100,8 @@ function AbsensiKegiatan() {
             }
         }
         switch (status) {
+            case 'dibatalkan':
+                return { border: 'border-l-gray-400', bg: 'bg-gray-100', icon: 'text-gray-400', label: 'Dibatalkan', labelBg: 'bg-gray-200 text-gray-600' };
             case 'sedang_berlangsung':
                 return { border: 'border-l-red-500', bg: 'bg-red-100', icon: 'text-red-500', label: 'Belum Absen', labelBg: 'bg-red-100 text-red-700' };
             case 'terlewat':
@@ -241,16 +243,16 @@ function AbsensiKegiatan() {
                 {allKegiatan.length > 0 ? (
                     allKegiatan.map((item, index) => {
                         const colors = getStatusColor(item.status_absensi, item.kehadiran_status);
-                        const canInteract = item.isToday && (item.status_absensi !== 'sudah_absen' || isUnlocked);
+                        const canInteract = item.isToday && item.status_absensi !== 'dibatalkan' && (item.status_absensi !== 'sudah_absen' || isUnlocked);
                         const isPJ = item.role === 'penanggung_jawab';
 
                         return (
                             <button
                                 key={`${item.id}-${item.dateStr}`}
                                 onClick={() => handleKegiatanClick(item)}
-                                disabled={!item.isToday}
+                                disabled={!item.isToday || item.status_absensi === 'dibatalkan'}
                                 className={`w-full bg-white rounded-xl shadow-sm p-4 transition-all border-l-4 ${colors.border} ${canInteract ? 'cursor-pointer hover:shadow-md' : 'cursor-default'
-                                    } ${item.status_absensi === 'sudah_absen' && !isUnlocked ? 'opacity-60' : ''} ${!item.isToday ? 'opacity-70' : ''}`}
+                                    } ${(item.status_absensi === 'sudah_absen' && !isUnlocked) || item.status_absensi === 'dibatalkan' ? 'opacity-60' : ''} ${!item.isToday ? 'opacity-70' : ''}`}
                             >
                                 <div className="flex items-start gap-3">
                                     <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>

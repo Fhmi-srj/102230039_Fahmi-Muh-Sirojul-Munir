@@ -152,8 +152,8 @@ function ManajemenKegiatan() {
             let aVal = a[column] || '';
             let bVal = b[column] || '';
             if (column === 'pj') {
-                aVal = a.penanggungjawab?.nama || '';
-                bVal = b.penanggungjawab?.nama || '';
+                aVal = a.penanggung_jawab?.nama || '';
+                bVal = b.penanggung_jawab?.nama || '';
             }
             if (column === 'status_kbm') {
                 aVal = a.kalender?.status_kbm || 'Aktif';
@@ -186,7 +186,7 @@ function ManajemenKegiatan() {
             const s = search.toLowerCase();
             return (
                 item.nama_kegiatan?.toLowerCase().includes(s) ||
-                item.penanggungjawab?.nama?.toLowerCase().includes(s) ||
+                item.penanggung_jawab?.nama?.toLowerCase().includes(s) ||
                 item.tempat?.toLowerCase().includes(s)
             );
         });
@@ -249,7 +249,7 @@ function ManajemenKegiatan() {
             status: item.kalender?.status_kbm || item.status || 'Aktif',
             kalender_id: item.kalender_id || (item.kalender?.id || '')
         });
-        setPjSearch(item.penanggungjawab?.nama || '');
+        setPjSearch(item.penanggung_jawab?.nama || '');
         setGpSearch('');
         setShowModal(true);
     };
@@ -714,7 +714,7 @@ function ManajemenKegiatan() {
                                         <td className={`${isMobile ? 'py-1 px-1' : 'py-2.5 px-2'} align-middle`}>
                                             <div className="flex flex-col">
                                                 <span className={`${isMobile ? 'text-[8px] leading-tight' : 'text-xs'} font-black text-gray-700 dark:text-dark-text group-hover:text-primary transition-colors uppercase tracking-tight ${isMobile ? 'whitespace-normal break-words' : ''}`}>{item.nama_kegiatan}</span>
-                                                <span className={`${isMobile ? 'text-[7px]' : 'text-[8px]'} text-gray-400 font-medium italic`}>PJ: {item.penanggungjawab?.nama || '-'}</span>
+                                                <span className={`${isMobile ? 'text-[7px]' : 'text-[8px]'} text-gray-400 font-medium italic`}>PJ: {item.penanggung_jawab?.nama || '-'}</span>
                                             </div>
                                         </td>
                                         <td className={`${isMobile ? 'py-1 px-1' : 'py-2.5 px-2'} align-middle`}>
@@ -757,7 +757,7 @@ function ManajemenKegiatan() {
                                         )}
                                         {!isMobile && (
                                             <td className="py-2.5 px-2 align-middle">
-                                                <span className="text-xs font-bold text-gray-600 dark:text-dark-text uppercase">{item.penanggungjawab?.nama || '-'}</span>
+                                                <span className="text-xs font-bold text-gray-600 dark:text-dark-text uppercase">{item.penanggung_jawab?.nama || '-'}</span>
                                             </td>
                                         )}
 
@@ -851,7 +851,7 @@ function ManajemenKegiatan() {
                                                     <div className="expand-item"><span className="expand-label">Mulai</span><span className="expand-value">{formatDateTime(item.waktu_mulai)}</span></div>
                                                     <div className="expand-item"><span className="expand-label">Selesai</span><span className="expand-value">{item.waktu_berakhir ? formatDateTime(item.waktu_berakhir) : '-'}</span></div>
                                                     <div className="expand-item"><span className="expand-label">Tempat</span><span className="expand-value">{item.tempat}</span></div>
-                                                    <div className="expand-item"><span className="expand-label">PJ</span><span className="expand-value">{item.penanggungjawab?.nama || '-'}</span></div>
+                                                    <div className="expand-item"><span className="expand-label">PJ</span><span className="expand-value">{item.penanggung_jawab?.nama || '-'}</span></div>
                                                     <div className="expand-item"><span className="expand-label">Status KBM</span><span className="expand-value">{item.kalender?.status_kbm || 'Aktif'}</span></div>
                                                     <div className="expand-item">
                                                         <span className="expand-label">Pendamping</span>
@@ -1379,10 +1379,10 @@ function AbsensiKegiatanAdminModal({ show, onClose, kegiatan, initialData, onSuc
                         <div className="bg-green-50 dark:bg-green-900/10 border-2 border-green-200 dark:border-green-800 rounded-2xl p-3">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                                    {(kegiatan?.penanggungjawab?.nama || '-').charAt(0).toUpperCase()}
+                                    {(kegiatan?.penanggung_jawab?.nama || '-').charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-gray-800 dark:text-dark-text text-sm truncate">{kegiatan?.penanggungjawab?.nama || '-'}</p>
+                                    <p className="font-bold text-gray-800 dark:text-dark-text text-sm truncate">{kegiatan?.penanggung_jawab?.nama || '-'}</p>
                                     <p className="text-xs text-gray-400">Penanggung Jawab</p>
                                 </div>
                                 <div className="flex gap-1">

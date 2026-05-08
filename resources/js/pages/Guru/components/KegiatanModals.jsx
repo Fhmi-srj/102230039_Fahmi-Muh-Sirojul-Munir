@@ -326,17 +326,20 @@ export function ModalAbsensiKegiatanPJ({ kegiatan, tanggal, guruPendamping, sisw
 
     const handleCancelKegiatan = async () => {
         const { value: alasan } = await Swal.fire({
-            title: 'Liburkan Kegiatan?',
-            text: 'Masukkan alasan membatalkan/meliburkan kegiatan ini:',
+            title: 'Batalkan Kegiatan?',
+            text: 'Masukkan alasan pembatalan kegiatan ini (misalnya: hujan lebat, ada ujian, dll):',
             input: 'text',
             inputPlaceholder: 'Contoh: Ada ujian sekolah / Hujan lebat',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#EF4444',
             cancelButtonColor: '#6B7280',
-            confirmButtonText: 'Ya, Liburkan',
-            cancelButtonText: 'Batal',
+            confirmButtonText: 'Ya, Batalkan',
+            cancelButtonText: 'Tidak',
             reverseButtons: true,
+            customClass: {
+                container: '!z-[10000]'
+            },
             inputValidator: (value) => {
                 if (!value) {
                     return 'Alasan harus diisi!'
@@ -350,10 +353,29 @@ export function ModalAbsensiKegiatanPJ({ kegiatan, tanggal, guruPendamping, sisw
                 await api.post(`/guru-panel/kegiatan/${kegiatan.id}/cancel`, {
                     keterangan: alasan
                 });
+                
+                await Swal.fire({
+                    title: 'Berhasil!',
+                    text: 'Kegiatan berhasil dibatalkan.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    customClass: {
+                        container: '!z-[10000]'
+                    }
+                });
+
                 onSuccess(); // Close modal and refresh dashboard
             } catch (err) {
                 console.error('Error cancelling kegiatan:', err);
-                Swal.fire('Gagal!', err.response?.data?.error || 'Gagal membatalkan kegiatan', 'error');
+                Swal.fire({
+                    title: 'Gagal!',
+                    text: err.response?.data?.error || 'Gagal membatalkan kegiatan',
+                    icon: 'error',
+                    customClass: {
+                        container: '!z-[10000]'
+                    }
+                });
             } finally {
                 setIsCancelling(false);
             }
@@ -805,8 +827,8 @@ export function ModalAbsensiKegiatanPJ({ kegiatan, tanggal, guruPendamping, sisw
                         disabled={loading || isCancelling}
                         className="w-full py-2.5 rounded-xl text-red-500 font-medium text-sm flex items-center justify-center gap-2 hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors disabled:opacity-50"
                     >
-                        {isCancelling ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-calendar-times"></i>}
-                        Liburkan / Batalkan Kegiatan
+                        {isCancelling ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-ban"></i>}
+                        Batalkan Kegiatan Ini
                     </button>
                 </div>
             </div>
