@@ -855,19 +855,21 @@ class GuruKegiatanController extends Controller
 
         $alasan = $request->input('keterangan', 'Dibatalkan oleh Penanggung Jawab');
 
-        // Tandai kegiatan sebagai dibatalkan — TIDAK mengubah KBM/Kalender
-        // Membatalkan kegiatan (misal ekstra mingguan) bukan berarti KBM libur
-        $kegiatan->update(['status' => 'Dibatalkan']);
+        // Hapus absensi yang mungkin terbuat (jika ada)
+        \App\Models\AbsensiKegiatan::where('kegiatan_id', $kegiatan->id)->delete();
+
+        // Hapus kegiatan dari database agar hilang dari jadwal guru dan tidak ditagih absen
+        $kegiatan->delete();
 
         // Log activity
         ActivityLog::logDelete(
             $kegiatan,
-            "Membatalkan/meliburkan kegiatan: {$kegiatan->nama_kegiatan} oleh PJ. Alasan: {$alasan}"
+            "Membatalkan/menghapus jadwal kegiatan: {$kegiatan->nama_kegiatan} oleh PJ. Alasan: {$alasan}"
         );
 
         return response()->json([
             'success' => true,
-            'message' => 'Kegiatan berhasil dibatalkan/diliburkan'
+            'message' => 'Kegiatan berhasil dibatalkan dan dihapus dari jadwal'
         ]);
     }
 }
