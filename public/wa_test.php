@@ -1,15 +1,18 @@
 <?php
-require 'vendor/autoload.php';
-$app = require_once 'bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->bootstrap();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Ambil langsung dari config Laravel (yang sudah diupdate dari .env)
-$url    = config('services.mpwa.url');
-$apiKey = config('services.mpwa.api_key');
-$sender = config('services.mpwa.sender');
+// Baca file .env langsung tanpa meload Laravel
+$envPath = __DIR__ . '/../.env';
+if (!file_exists($envPath)) {
+    die("File .env tidak ditemukan di $envPath");
+}
 
-// Coba berbagai format sender
+$envVars = parse_ini_file($envPath);
+$url = $envVars['MPWA_URL'] ?? 'https://wa.groovy-media.com/send-message';
+$apiKey = $envVars['MPWA_API_KEY'] ?? '';
+$sender = $envVars['MPWA_SENDER'] ?? '';
+
 $senderVariants = [
     $sender,
     $sender . ':1',
@@ -17,7 +20,7 @@ $senderVariants = [
 ];
 
 echo "<pre>";
-echo "=== Config yang terbaca dari server ===\n";
+echo "=== Config langsung dari .env ===\n";
 echo "URL   : $url\n";
 echo "Key   : " . substr($apiKey, 0, 5) . "..." . substr($apiKey, -5) . "\n\n";
 
@@ -29,7 +32,7 @@ foreach ($senderVariants as $s) {
         'api_key' => $apiKey,
         'sender'  => $s,
         'number'  => $s,
-        'message' => 'Test koneksi dari server hosting - abaikan',
+        'message' => 'Test koneksi dari server hosting',
     ]));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -43,5 +46,4 @@ foreach ($senderVariants as $s) {
     echo "Sender: $s\n";
     echo "Status: $httpCode | Response: $response\n\n";
 }
-
 echo "</pre>";
