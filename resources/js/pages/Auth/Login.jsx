@@ -121,6 +121,36 @@ function Login() {
         setWebauthnLoading(false);
     };
 
+    const handleQuickLogin = async (quickUsername, quickPassword) => {
+        setError('');
+
+        if (!tahunAjaranId) {
+            setError('Pilih tahun ajaran terlebih dahulu');
+            return;
+        }
+
+        setLoading(true);
+        setUsername(quickUsername);
+        setPassword(quickPassword);
+
+        const result = await login(quickUsername, quickPassword, remember, parseInt(tahunAjaranId));
+
+        if (result.success) {
+            const activeRole = localStorage.getItem('active_role') || 'guru';
+            if (activeRole === 'siswa') {
+                navigate('/siswa', { replace: true });
+            } else if (hasAdminAccess(activeRole)) {
+                navigate('/dashboard', { replace: true });
+            } else {
+                navigate('/guru', { replace: true });
+            }
+        } else {
+            setError(result.message);
+        }
+
+        setLoading(false);
+    };
+
     return (
         <>
             <style>{cssStyles}</style>
@@ -247,6 +277,39 @@ function Login() {
                                 )}
                             </button>
                         </form>
+
+                        {/* Quick Login */}
+                        <div style={{ marginTop: '24px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0 16px' }}>
+                                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #e2e8f0)' }}></div>
+                                <span style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Quick Login Demo</span>
+                                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #e2e8f0)' }}></div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                    type="button"
+                                    className="btn-quick-login"
+                                    onClick={() => handleQuickLogin('akromadabi', 'password')}
+                                    disabled={loading || webauthnLoading}
+                                    style={{ flex: 1, padding: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', cursor: 'pointer', color: '#475569', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}
+                                    onMouseOver={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
+                                >
+                                    <i className="fas fa-user-shield" style={{ color: '#3b82f6' }}></i> Admin
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn-quick-login"
+                                    onClick={() => handleQuickLogin('dewi', 'password')}
+                                    disabled={loading || webauthnLoading}
+                                    style={{ flex: 1, padding: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', cursor: 'pointer', color: '#475569', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}
+                                    onMouseOver={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
+                                >
+                                    <i className="fas fa-chalkboard-teacher" style={{ color: '#10b981' }}></i> Guru
+                                </button>
+                            </div>
+                        </div>
 
                         {/* WebAuthn Fingerprint Login */}
                         {webauthnSupported && (
